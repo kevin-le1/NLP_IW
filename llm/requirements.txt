@@ -1,0 +1,7 @@
+ollama
+deepeval
+langchain_openai
+json
+langchain-community
+langchain-ollama
+faiss-cpu
