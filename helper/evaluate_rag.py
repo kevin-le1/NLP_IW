@@ -130,3 +130,5 @@ if __name__ == "__main__":
     # Add any necessary setup or configuration here
     # Example: evaluate_rag(your_chunks_query_retriever_function)
     pass
+
+# do for 186 datas points

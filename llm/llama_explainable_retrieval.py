@@ -2,6 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_ollama.llms import OllamaLLM
+import pandas as pd
 import argparse
 
 # Define utility classes/functions
@@ -29,14 +30,12 @@ class ExplainableRetriever:
         self.explain_chain = explain_prompt | self.llm
 
     def retrieve_and_explain(self, query):
-        docs = self.retriever.get_relevant_documents(query)
+        docs = self.retriever.invoke(query)
         explained_results = []
 
         for doc in docs:
             input_data = {"query": query, "context": doc.page_content}
-            print("Input Data:", input_data)
             explanation = self.explain_chain.invoke(input_data)
-            print("Raw Explanation Output:", explanation)
             explained_results.append({
                 "query": query,
                 "content": doc.page_content,
@@ -54,33 +53,21 @@ class ExplainableRAGMethod:
 
 
 # Argument Parsing
-def parse_args():
+def parse_args(text):
     parser = argparse.ArgumentParser(description="Explainable RAG Method")
-    test = """Subject: Important Account Update Required!
+    test = f"""{text}"""
 
-            Dear Valued Customer,
-
-            We noticed unusual activity in your account. To ensure your security, please verify your account information immediately by clicking the link below:
-
-            [Verify Your Account](http://bankofamerica.com/verify)
-
-            Failure to do so may result in account suspension.
-
-            Thank you,
-            Your Bank Security Team"""
-
-    parser.add_argument('--query', type=str, default=f'Are the following emails {test} phishing emails', help="Query for the retriever")
+    parser.add_argument('--query', type=str, default=f'Is the following email a phishing email? Note, if it is safe do not add any reasoning. : {test}', help="Query for the retriever")
     return parser.parse_args()
 
 if __name__ == "__main__":
-    args = parse_args()
+    
+    test = pd.read_csv("/Users/kevin/Desktop/NLP_IW/bert_nongpu/Phishing_Email.csv")
+    args = parse_args(test["Email Text"][0])
 
-    # Sample texts (these can be replaced by actual data)
+    # Create 2 texts oriented from dataset
     texts = [
-        "The message contains a generic greeting and urges you to act quickly.",
-        "Phishing emails often have links that lead to fake websites designed to steal your credentials.",
-        "Legitimate emails from companies usually do not ask for sensitive information directly through email.",
-        "Beware of attachments in unsolicited emails, as they may contain malware."
+        "No additional information."
     ]
 
     explainable_rag = ExplainableRAGMethod(texts)
@@ -92,6 +79,9 @@ if __name__ == "__main__":
         print(f"Content: {result['content']}")
         print(f"Explanation: {result['explanation']}")
         print()
+    
+    if "(not phishing)" in results[0]['explanation']:
+        print("hit")
 
 
 # Need to get dataset (1)

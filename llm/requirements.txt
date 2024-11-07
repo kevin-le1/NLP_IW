@@ -5,3 +5,4 @@ json
 langchain-community
 langchain-ollama
 faiss-cpu
+transformers
