@@ -1,59 +1,23 @@
 from langchain.llms.base import LLM
-from typing import Optional, List, Mapping, Any
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_ollama.llms import OllamaLLM
 import pandas as pd
-import argparse
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score, confusion_matrix
 import seaborn as sns
-import modal
-from pydantic import PrivateAttr
 
-modal_app = modal.App()
 
-llama_function = modal.Function.lookup("example-tgi-Meta-Llama-3-70B-Instruct", "Model.generate")
-
-class ModalLLMWrapper(LLM):
-    _modal_function: Any = PrivateAttr()  # Declare as private attribute
-
-    def __init__(self, modal_function):
-        super().__init__()
-        self._modal_function = modal_function  # Store the modal function
-
-    def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
-        
-        truncated_prompt = truncate_text(prompt, max_tokens=725)
-    
-        
-        # Run modal function and get the response
-        response = self._modal_function.remote(truncated_prompt)
-        # Check if the response is a string or dictionary
-        if isinstance(response, dict) and "text" in response:
-            return response["text"]
-        elif isinstance(response, str):
-            return response
-        else:
-            raise ValueError("Unexpected response format from modal function")
-
-    @property
-    def _identifying_params(self) -> Mapping[str, Any]:
-        return {"modal_function_identifier": "Meta-Llama-3-70B-Instruct"}
-    
-    @property
-    def _llm_type(self) -> str:
-        return "modal_llm"
 
 # Define utility classes/functions
 class ExplainableRetriever:
     def __init__(self, texts):
-        self.embeddings = OllamaEmbeddings()  # Use Ollama embeddings
+        self.embeddings = OllamaEmbeddings()
         self.vectorstore = FAISS.from_texts(texts, self.embeddings)
-        self.llm = ModalLLMWrapper(llama_function)  # Wrap modal function for LangChain compatibility
+        self.llm = OllamaLLM() # ADD GPT
 
-        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 1})
+        self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
         explain_prompt = ChatPromptTemplate(
             messages=[
@@ -83,15 +47,12 @@ class ExplainableRetriever:
             })
         return explained_results
 
-
 class ExplainableRAGMethod:
     def __init__(self, texts):
         self.explainable_retriever = ExplainableRetriever(texts)
 
     def run(self, query):
         return self.explainable_retriever.retrieve_and_explain(query)
-
-
 
 def create_classification_report(Y_test, Y_pred):
     print('--------Classification Report---------\n')
@@ -107,11 +68,6 @@ def create_classification_report(Y_test, Y_pred):
     sns.heatmap(confusion_matrix(Y_test, Y_pred), annot=True, cmap='RdYlGn_r', annot_kws={'size': 16})
     return scores
 
-def truncate_text(text, max_tokens):
-    # this doesnt really work need to first tokenize the text modal is bad does not to it properly
-    words = text.split()
-    return ' '.join(words[:max_tokens])
-
 if __name__ == "__main__":
     # Load dataset
     data = pd.read_csv("/Users/kevin/Desktop/NLP_IW/bert_nongpu/Phishing_Email.csv")
@@ -122,17 +78,12 @@ if __name__ == "__main__":
 
     # Split into train and test sets (80% train, 20% test)
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.015, random_state=10)
-    print(y_test.head(50))
 
     y_pred = []
-    
-    # Add this
-    explainable_rag = ExplainableRAGMethod("")
+    explainable_rag = ExplainableRAGMethod("If there are any relatively ")
     
 
     for idx, email_text in enumerate(X_test):
-        # Initialize explainable RAG method with train texts
-        # Test query
         query = f'Is the following email a phishing email? Note, if it is safe do not add any reasoning. : {email_text}'
         # Run the explainable RAG method
         results = explainable_rag.run(query)
@@ -153,15 +104,4 @@ if __name__ == "__main__":
     results_df = pd.DataFrame({"y_test": y_test.values, "y_pred": y_pred})
 
     # Save the DataFrame to a CSV file
-    results_df.to_csv("/Users/kevin/Desktop/NLP_IW/llm/predictions.csv", index=False)
-
-'''
-[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0,
-0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0,
-0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1,
-0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
-1, 0, 0, 0, 0, 1, 0]
-'''
+    results_df.to_csv("/Users/kevin/Desktop/NLP_IW/llm/predictionsGPT.csv", index=False)

@@ -1,5 +1,4 @@
 from modal import App, Image, Volume
-import os
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -9,7 +8,6 @@ import torch.nn as nn
 from tqdm import tqdm
 import numpy as np
 from collections import defaultdict
-import json
 app = App()
 
 # Define the image with required dependencies
