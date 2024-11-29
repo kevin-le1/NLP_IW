@@ -2,6 +2,8 @@ from scapy.all import rdpcap, Raw
 from scapy.layers.http import HTTPRequest, HTTPResponse
 from scapy.layers.dns import DNSQR, DNSRR
 
+# Testing one individual file
+
 # Load PCAP
 packets = rdpcap("/Users/kevin/Desktop/NLP_IW/network/hao123-com_packet-injection.pcap")
 
