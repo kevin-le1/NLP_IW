@@ -121,7 +121,7 @@ def run(packets):
 
 # Iterate over many PCAP data
 def main():
-    # directory = "/Users/kevin/Desktop/NLP_IW/network/ddos"
+    # directory = "./ddos"
     
     # pcap_files = [os.path.join(directory, file) for file in os.listdir(directory) if file.endswith('.pcap')]
     
@@ -130,7 +130,7 @@ def main():
     #     packets = rdpcap(file)
     #     run(packets)
     
-    run(rdpcap("/Users/kevin/Desktop/NLP_IW/network/hao123-com_packet-injection.pcap"))
+    run(rdpcap("./packet_inject/hao123-com_packet-injection.pcap"))
 
 # __name__
 if __name__=="__main__":
