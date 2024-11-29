@@ -8,8 +8,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score, confusion_matrix
 import seaborn as sns
 
-
-
 # Define utility classes/functions
 class ExplainableRetriever:
     def __init__(self, texts):
@@ -39,7 +37,8 @@ class ExplainableRetriever:
 
         for doc in docs:
             input_data = {"query": query, "context": doc.page_content}
-            explanation = self.explain_chain.invoke(input_data)  # Use invoke to run the pipeline
+            # Use invoke to run the pipeline
+            explanation = self.explain_chain.invoke(input_data)
             explained_results.append({
                 "query": query,
                 "content": doc.page_content,
