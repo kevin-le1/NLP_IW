@@ -109,6 +109,7 @@ def run(packets):
     # Analyze all batches
     results = []
     for i, batch in enumerate(all_batches):
+        
         print(batch)
         print(f"Analyzing batch {i + 1}/{len(all_batches)}...")
         result = analyze_batch_with_llm(llm, batch)
@@ -117,7 +118,9 @@ def run(packets):
 
     # Print results for each batch
     for result in results:
-        print(f"Batch {result['batch']} Analysis:\n{result['response']}\n")
+        print(f"Analysis:\n{result['response']['generations'][0]['text']}\n")
+
+    return results
 
 # Iterate over many PCAP data
 def main():
@@ -130,7 +133,7 @@ def main():
     #     packets = rdpcap(file)
     #     run(packets)
     
-    run(rdpcap("./packet_inject/hao123-com_packet-injection.pcap"))
+    run(rdpcap("/Users/kevin/Desktop/NLP_IW/network/packet_inject/hao123-com_packet-injection.pcap"))
 
 # __name__
 if __name__=="__main__":

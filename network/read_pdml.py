@@ -5,7 +5,7 @@ from scapy.layers.dns import DNSQR, DNSRR
 # Testing one individual file
 
 # Load PCAP
-packets = rdpcap("./packet_inject/hao123-com_packet-injection.pcap")
+packets = rdpcap("/Users/kevin/Desktop/NLP_IW/network/packet_inject/hao123-com_packet-injection.pcap")
 
 # Process Packets
 for packet in packets:
